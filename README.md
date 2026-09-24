@@ -1,2 +1,2 @@
-# RestaurantOS - Vibe Coding 
+# RestaurantOS - 
 It the platform for the Hotels and Restuarents
