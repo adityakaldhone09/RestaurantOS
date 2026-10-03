@@ -80,7 +80,11 @@ const Orders = () => {
               <tr><td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">No orders found.</td></tr>
             ) : (
               orders.map((order) => (
-                <tr key={order._id} className="hover:bg-gray-50 cursor-pointer">
+                <tr 
+                  key={order._id} 
+                  className="hover:bg-gray-50 cursor-pointer"
+                  onClick={() => window.location.href = `/orders/${order._id}`}
+                >
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">{order.orderId}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.table?.tableNumber || 'N/A'}</td>
                   <td className="px-6 py-4 text-sm text-gray-500 truncate max-w-xs">

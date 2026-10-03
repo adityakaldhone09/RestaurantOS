@@ -9,6 +9,10 @@ import Orders from './pages/Orders';
 import Kitchen from './pages/Kitchen';
 import Menu from './pages/Menu';
 import NewOrder from './pages/NewOrder';
+import Inventory from './pages/Inventory';
+import Staff from './pages/Staff';
+import Settings from './pages/Settings';
+import OrderDetail from './pages/OrderDetail';
 
 function App() {
   return (
@@ -22,8 +26,12 @@ function App() {
             <Route path="tables" element={<Tables />} />
             <Route path="orders" element={<Orders />} />
             <Route path="orders/new" element={<NewOrder />} />
+            <Route path="orders/:id" element={<OrderDetail />} />
             <Route path="kitchen" element={<Kitchen />} />
             <Route path="menu" element={<Menu />} />
+            <Route path="inventory" element={<Inventory />} />
+            <Route path="staff" element={<Staff />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
       </AuthProvider>
