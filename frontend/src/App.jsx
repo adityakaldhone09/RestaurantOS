@@ -4,6 +4,10 @@ import { AuthProvider } from './context/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import MainLayout from './layouts/MainLayout';
+import Tables from './pages/Tables';
+import Orders from './pages/Orders';
+import Kitchen from './pages/Kitchen';
+import Menu from './pages/Menu';
 
 function App() {
   return (
@@ -14,6 +18,10 @@ function App() {
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="tables" element={<Tables />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="kitchen" element={<Kitchen />} />
+            <Route path="menu" element={<Menu />} />
           </Route>
         </Routes>
       </AuthProvider>
