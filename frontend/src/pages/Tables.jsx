@@ -51,7 +51,7 @@ const Tables = () => {
           <div 
             key={table._id} 
             className={`border-2 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-transform hover:scale-105 shadow-sm bg-white ${getStatusColor(table.status)}`}
-            onClick={() => console.log('View table', table._id)}
+            onClick={() => window.location.href = `/orders/new?table=${table._id}`}
           >
             <h3 className="text-3xl font-bold mb-2">{table.tableNumber}</h3>
             <span className="text-sm font-semibold uppercase tracking-wider mb-3">

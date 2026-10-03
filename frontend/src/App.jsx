@@ -8,6 +8,7 @@ import Tables from './pages/Tables';
 import Orders from './pages/Orders';
 import Kitchen from './pages/Kitchen';
 import Menu from './pages/Menu';
+import NewOrder from './pages/NewOrder';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="tables" element={<Tables />} />
             <Route path="orders" element={<Orders />} />
+            <Route path="orders/new" element={<NewOrder />} />
             <Route path="kitchen" element={<Kitchen />} />
             <Route path="menu" element={<Menu />} />
           </Route>

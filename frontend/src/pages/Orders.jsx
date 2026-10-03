@@ -40,7 +40,10 @@ const Orders = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Orders</h2>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-blue-700">
+        <button 
+          onClick={() => window.location.href = '/orders/new'}
+          className="bg-blue-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-blue-700"
+        >
           <Plus size={18} className="mr-2" /> New Order
         </button>
       </div>
