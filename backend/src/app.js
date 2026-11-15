@@ -20,7 +20,7 @@ app.use(morgan('dev'));
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100
+  max: 5000 // Allow development & live dashboard polling
 });
 
 app.use('/api/', apiLimiter);
