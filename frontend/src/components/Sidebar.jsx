@@ -19,6 +19,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { RestaurantOSLogoReveal } from './ui/liquid-glass-logo-reveal';
 
 const Sidebar = ({ collapsed, setCollapsed, mobileClose }) => {
   const { user, logout } = useAuth();
@@ -48,8 +49,8 @@ const Sidebar = ({ collapsed, setCollapsed, mobileClose }) => {
         <div className="h-16 px-4 flex items-center justify-between border-b border-[#52155D] dark:border-[#2B1930]">
           {!collapsed ? (
             <Link to="/dashboard" className="flex items-center gap-2.5 font-bold text-lg tracking-tight text-white group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#FF5A0A] to-[#E7B0DE] flex items-center justify-center text-white shadow-md shadow-[#FF5A0A]/20 transition-transform group-hover:scale-105">
-                <UtensilsCrossed size={22} className="stroke-[2.2]" />
+              <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-[#FF5A0A]/20 border border-[#E7B0DE]/30 transition-transform group-hover:scale-105">
+                <RestaurantOSLogoReveal className="w-full h-full" themeVariant="brand" tileSize={80} />
               </div>
               <div className="flex flex-col">
                 <span className="font-extrabold text-white text-[17px] leading-tight flex items-center gap-1.5">
@@ -62,8 +63,8 @@ const Sidebar = ({ collapsed, setCollapsed, mobileClose }) => {
             </Link>
           ) : (
             <Link to="/dashboard" className="mx-auto">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#FF5A0A] to-[#E7B0DE] flex items-center justify-center text-white shadow-md shadow-[#FF5A0A]/20">
-                <UtensilsCrossed size={22} className="stroke-[2.2]" />
+              <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-[#FF5A0A]/20 border border-[#E7B0DE]/30">
+                <RestaurantOSLogoReveal className="w-full h-full" themeVariant="brand" tileSize={80} />
               </div>
             </Link>
           )}

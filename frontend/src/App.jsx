@@ -16,6 +16,7 @@ import Inventory from './pages/Inventory';
 import Staff from './pages/Staff';
 import Settings from './pages/Settings';
 import OrderDetail from './pages/OrderDetail';
+import GlassReveal21stDemo, { RestaurantOSLogoRevealDemo } from './components/ui/demo';
 
 function App() {
   return (
@@ -25,6 +26,8 @@ function App() {
           <AuthProvider>
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/demo/logo" element={<GlassReveal21stDemo />} />
+              <Route path="/demo/restaurantos-logo" element={<RestaurantOSLogoRevealDemo />} />
               <Route path="/" element={<MainLayout />}>
                 <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={<Dashboard />} />

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { RestaurantOSLogoReveal } from '@/components/ui/liquid-glass-logo-reveal';
 
 const Login = () => {
   const [email, setEmail] = useState('admin@restaurant.com');
@@ -79,8 +80,8 @@ const Login = () => {
 
         {/* Brand Header */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#FF5A0A] to-[#E7B0DE] flex items-center justify-center text-white shadow-xl shadow-[#FF5A0A]/30">
-            <UtensilsCrossed size={24} className="stroke-[2.2]" />
+          <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-xl shadow-[#FF5A0A]/20 border border-[#E7B0DE]/30">
+            <RestaurantOSLogoReveal className="w-full h-full" themeVariant="brand" tileSize={96} />
           </div>
           <div>
             <span className="font-extrabold text-2xl tracking-tight leading-none text-white">
