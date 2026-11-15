@@ -30,6 +30,15 @@ coverage
 node_modules/
 jspm_packages/
 
+# Build artifacts
+dist/
+frontend/dist/
+backend/dist/
+
+# MCP configuration containing local credentials
+.mcp.json
+!.mcp.json.example
+
 # TypeScript cache
 *.tsbuildinfo
 
