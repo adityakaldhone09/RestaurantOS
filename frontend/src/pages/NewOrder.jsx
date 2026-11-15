@@ -1,23 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingCart, Plus, Minus, X } from 'lucide-react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { 
+  ShoppingCart, 
+  Plus, 
+  Minus, 
+  Trash2, 
+  Search, 
+  UtensilsCrossed, 
+  Clock, 
+  Check, 
+  Sparkles,
+  ArrowLeft,
+  MessageSquare,
+  FileText
+} from 'lucide-react';
+import { Card, CardContent } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import { Input } from '../components/ui/input';
+import { toast } from 'sonner';
 
 const NewOrder = () => {
   const [categories, setCategories] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [tables, setTables] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [onlyVeg, setOnlyVeg] = useState(false);
   const [selectedTable, setSelectedTable] = useState('');
   
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     fetchData();
-    // If navigated from a specific table
     const params = new URLSearchParams(location.search);
     const tableId = params.get('table');
     if (tableId) setSelectedTable(tableId);
@@ -25,16 +46,19 @@ const NewOrder = () => {
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       const [catRes, menuRes, tableRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/menu/categories`),
-        axios.get(`${import.meta.env.VITE_API_URL}/menu/items`),
-        axios.get(`${import.meta.env.VITE_API_URL}/tables`)
+        axios.get(`${import.meta.env.VITE_API_URL}/menu/categories`).catch(() => ({ data: { data: [] } })),
+        axios.get(`${import.meta.env.VITE_API_URL}/menu/items`).catch(() => ({ data: { data: [] } })),
+        axios.get(`${import.meta.env.VITE_API_URL}/tables`).catch(() => ({ data: { data: [] } }))
       ]);
-      setCategories(catRes.data.data);
-      setMenuItems(menuRes.data.data);
-      setTables(tableRes.data.data.filter(t => t.status === 'Available'));
+
+      setCategories(catRes.data?.data || []);
+      setMenuItems(menuRes.data?.data || []);
+      setTables(tableRes.data?.data || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching POS catalog:', error);
+      toast.error('Failed to load menu data');
     } finally {
       setLoading(false);
     }
@@ -46,8 +70,15 @@ const NewOrder = () => {
       if (existing) {
         return prev.map(i => i.menuItem === item._id ? { ...i, quantity: i.quantity + 1 } : i);
       }
-      return [...prev, { menuItem: item._id, name: item.name, price: item.price, quantity: 1, specialInstructions: '' }];
+      return [...prev, {
+        menuItem: item._id,
+        name: item.name,
+        price: item.price,
+        quantity: 1,
+        specialInstructions: ''
+      }];
     });
+    toast.success(`Added ${item.name}`);
   };
 
   const updateQuantity = (id, delta) => {
@@ -57,7 +88,7 @@ const NewOrder = () => {
         return newQ > 0 ? { ...i, quantity: newQ } : i;
       }
       return i;
-    }));
+    }).filter(i => i.quantity > 0));
   };
 
   const removeFromCart = (id) => {
@@ -68,153 +99,321 @@ const NewOrder = () => {
     setCart(prev => prev.map(i => i.menuItem === id ? { ...i, specialInstructions: instructions } : i));
   };
 
+  // Pricing
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const tax = subtotal * 0.05; // 5% tax
-  const total = subtotal + tax;
+  const tax = Number((subtotal * 0.05).toFixed(2));
+  const total = Number((subtotal + tax).toFixed(2));
 
   const placeOrder = async () => {
-    if (!selectedTable) return alert('Please select a table');
-    if (cart.length === 0) return alert('Cart is empty');
+    if (!selectedTable) {
+      return toast.error('Please assign a table for this order');
+    }
+    if (cart.length === 0) {
+      return toast.error('Your order cart is empty');
+    }
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/orders`, {
+      setSubmitting(true);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/orders`, {
         table: selectedTable,
         items: cart,
         subtotal,
         tax,
         total
       });
+
+      toast.success(`Order ${res.data?.data?.orderId || 'placed'} dispatched to Kitchen!`);
       navigate('/orders');
     } catch (error) {
-      console.error('Error placing order:', error);
-      alert('Failed to place order');
+      console.error('Error submitting order:', error);
+      toast.error(error.response?.data?.message || 'Failed to place order');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const filteredItems = selectedCategory === 'All' 
-    ? menuItems 
-    : menuItems.filter(item => item.category?._id === selectedCategory);
-
-  if (loading) return <div className="p-8 text-center">Loading...</div>;
+  // Filter items
+  const filteredItems = menuItems.filter(item => {
+    const matchesCategory = selectedCategory === 'All' || item.category?._id === selectedCategory || item.category === selectedCategory;
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesVeg = !onlyVeg || item.isVegetarian;
+    return matchesCategory && matchesSearch && matchesVeg;
+  });
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-8rem)]">
-      {/* Menu Section */}
-      <div className="flex-1 flex flex-col bg-white rounded-lg shadow overflow-hidden">
-        <div className="p-4 border-b border-gray-200 overflow-x-auto whitespace-nowrap">
-          <button 
-            className={`px-4 py-2 rounded-full mr-2 ${selectedCategory === 'All' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'}`}
-            onClick={() => setSelectedCategory('All')}
-          >
-            All
-          </button>
-          {categories.map(c => (
-            <button 
-              key={c._id}
-              className={`px-4 py-2 rounded-full mr-2 ${selectedCategory === c._id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'}`}
-              onClick={() => setSelectedCategory(c._id)}
-            >
-              {c.name}
-            </button>
-          ))}
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredItems.map(item => (
-              <div 
-                key={item._id} 
-                onClick={() => addToCart(item)}
-                className="border rounded-lg p-4 cursor-pointer hover:border-blue-500 hover:shadow-md transition bg-gray-50 flex flex-col justify-between h-32"
-              >
-                <div>
-                  <div className="font-semibold text-gray-800 line-clamp-1">{item.name}</div>
-                  <div className="text-xs text-gray-500 line-clamp-2 mt-1">{item.description}</div>
-                </div>
-                <div className="flex justify-between items-center mt-2">
-                  <span className="font-bold text-blue-600">${item.price.toFixed(2)}</span>
-                  <div className={`w-3 h-3 rounded-full ${item.isVegetarian ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                </div>
-              </div>
-            ))}
+    <div className="space-y-6">
+      {/* Top Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link to="/orders">
+            <Button variant="outline" size="icon" className="rounded-xl border-[#EADFE8] dark:border-[#3D2C42]">
+              <ArrowLeft size={18} />
+            </Button>
+          </Link>
+          <div>
+            <h2 className="text-2xl font-extrabold text-[#242026] dark:text-[#F9F4F8] tracking-tight">
+              Point of Sale (POS) Terminal
+            </h2>
+            <p className="text-xs text-[#817985] dark:text-[#B4A9B8]">
+              Select items from the catalog to build an active table ticket.
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Cart Section */}
-      <div className="w-full lg:w-96 bg-white rounded-lg shadow flex flex-col h-full">
-        <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-lg">
-          <h3 className="text-lg font-bold flex items-center"><ShoppingCart className="mr-2" size={20}/> Current Order</h3>
-        </div>
-        
-        <div className="p-4 border-b border-gray-200">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Select Table</label>
-          <select 
-            className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            value={selectedTable}
-            onChange={(e) => setSelectedTable(e.target.value)}
-          >
-            <option value="">-- Choose Table --</option>
-            {tables.map(t => (
-              <option key={t._id} value={t._id}>{t.tableNumber} (Cap: {t.capacity})</option>
-            ))}
-          </select>
-        </div>
+      {/* POS Two-Column Workspace */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Menu Catalog (7 or 8 cols) */}
+        <div className="lg:col-span-8 space-y-4">
+          {/* Search & Dietary Filters Bar */}
+          <div className="flex flex-col sm:flex-row gap-3 p-3 bg-white dark:bg-[#231826] rounded-2xl border border-[#EADFE8] dark:border-[#3D2C42] shadow-sm">
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#817985]" />
+              <Input
+                placeholder="Search food, beverages, appetizers..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-9 h-10 rounded-xl border-[#EADFE8] dark:border-[#3D2C42] bg-[#FFF9F5] dark:bg-[#18111B] text-xs"
+              />
+            </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {cart.length === 0 ? (
-            <div className="text-center text-gray-500 my-8">Cart is empty</div>
+            <button
+              onClick={() => setOnlyVeg(!onlyVeg)}
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 border ${
+                onlyVeg 
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300' 
+                  : 'border-[#EADFE8] dark:border-[#3D2C42] text-[#817985] hover:text-[#242026] dark:hover:text-[#F9F4F8]'
+              }`}
+            >
+              <span className={`w-2.5 h-2.5 rounded-full ${onlyVeg ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+              Vegetarian Only
+            </button>
+          </div>
+
+          {/* Categories Tab Strip */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <button
+              onClick={() => setSelectedCategory('All')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                selectedCategory === 'All'
+                  ? 'bg-[#400849] text-white shadow-sm'
+                  : 'bg-white dark:bg-[#231826] text-[#817985] dark:text-[#B4A9B8] hover:text-[#242026] border border-[#EADFE8] dark:border-[#3D2C42]'
+              }`}
+            >
+              All Segments
+            </button>
+            {categories.map(c => (
+              <button
+                key={c._id}
+                onClick={() => setSelectedCategory(c._id)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                  selectedCategory === c._id
+                    ? 'bg-[#400849] text-white shadow-sm'
+                    : 'bg-white dark:bg-[#231826] text-[#817985] dark:text-[#B4A9B8] hover:text-[#242026] border border-[#EADFE8] dark:border-[#3D2C42]'
+                }`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Items Grid */}
+          {loading ? (
+            <div className="p-12 text-center text-[#817985]">Loading menu...</div>
+          ) : filteredItems.length === 0 ? (
+            <div className="p-12 text-center bg-white dark:bg-[#231826] rounded-2xl border border-[#EADFE8] dark:border-[#3D2C42]">
+              <p className="text-sm font-bold text-[#242026] dark:text-[#F9F4F8]">No items found</p>
+              <p className="text-xs text-[#817985]">Try clearing search or filters.</p>
+            </div>
           ) : (
-            cart.map(item => (
-              <div key={item.menuItem} className="flex flex-col pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="font-medium flex-1 pr-2">{item.name}</div>
-                  <div className="font-semibold w-16 text-right">${(item.price * item.quantity).toFixed(2)}</div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center border rounded-md">
-                    <button className="px-2 py-1 text-gray-500 hover:bg-gray-100" onClick={() => updateQuantity(item.menuItem, -1)}><Minus size={14}/></button>
-                    <span className="px-3 font-medium">{item.quantity}</span>
-                    <button className="px-2 py-1 text-gray-500 hover:bg-gray-100" onClick={() => updateQuantity(item.menuItem, 1)}><Plus size={14}/></button>
-                  </div>
-                  <button className="text-red-500 p-1 rounded hover:bg-red-50" onClick={() => removeFromCart(item.menuItem)}>
-                    <X size={16}/>
-                  </button>
-                </div>
-                
-                <input 
-                  type="text" 
-                  placeholder="Special instructions..." 
-                  className="mt-2 text-xs p-1 border rounded w-full focus:ring-blue-500 focus:border-blue-500"
-                  value={item.specialInstructions}
-                  onChange={(e) => updateInstructions(item.menuItem, e.target.value)}
-                />
-              </div>
-            ))
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filteredItems.map(item => {
+                const inCartItem = cart.find(i => i.menuItem === item._id);
+
+                return (
+                  <Card
+                    key={item._id}
+                    onClick={() => addToCart(item)}
+                    className="rounded-2xl border-[#EADFE8] dark:border-[#3D2C42] bg-white dark:bg-[#231826] hover:border-[#400849] dark:hover:border-[#E7B0DE] shadow-sm hover:shadow-md cursor-pointer transition-all duration-200 group flex flex-col justify-between"
+                  >
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5">
+                            <span 
+                              className={`w-2 h-2 rounded-full shrink-0 ${
+                                item.isVegetarian ? 'bg-emerald-500' : 'bg-rose-500'
+                              }`} 
+                              title={item.isVegetarian ? 'Vegetarian' : 'Non-Vegetarian'}
+                            />
+                            <h4 className="font-bold text-sm text-[#242026] dark:text-[#F9F4F8] group-hover:text-[#400849] dark:group-hover:text-[#E7B0DE] transition-colors line-clamp-1">
+                              {item.name}
+                            </h4>
+                          </div>
+                          <p className="text-xs text-[#817985] dark:text-[#B4A9B8] line-clamp-2">
+                            {item.description || 'Delicious freshly prepared specialty.'}
+                          </p>
+                        </div>
+
+                        {inCartItem && (
+                          <Badge className="bg-[#FF5A0A] text-white font-extrabold text-xs px-2 py-0.5 rounded-full shrink-0">
+                            {inCartItem.quantity}x
+                          </Badge>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-[#EADFE8]/60 dark:border-[#3D2C42]/60 text-xs">
+                        <span className="font-extrabold text-base text-[#400849] dark:text-[#E7B0DE]">
+                          ${item.price.toFixed(2)}
+                        </span>
+
+                        <span className="text-[11px] text-[#817985] dark:text-[#B4A9B8] flex items-center gap-1">
+                          <Clock size={12} className="text-[#FF5A0A]" /> {item.preparationTime || 12}m prep
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           )}
         </div>
 
-        <div className="p-4 bg-gray-50 rounded-b-lg border-t border-gray-200">
-          <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-600">Subtotal</span>
-            <span className="font-medium">${subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-sm mb-3">
-            <span className="text-gray-600">Tax (5%)</span>
-            <span className="font-medium">${tax.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-lg font-bold mb-4">
-            <span>Total</span>
-            <span className="text-blue-600">${total.toFixed(2)}</span>
-          </div>
-          <button 
-            className={`w-full py-3 rounded-lg font-bold text-white transition ${cart.length > 0 && selectedTable ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`}
-            disabled={cart.length === 0 || !selectedTable}
-            onClick={placeOrder}
-          >
-            Place Order
-          </button>
+        {/* Right Column: Live Order Ticket / Cart (4 cols) */}
+        <div className="lg:col-span-4 sticky top-20">
+          <Card className="rounded-2xl border-[#EADFE8] dark:border-[#3D2C42] bg-white dark:bg-[#231826] shadow-xl overflow-hidden">
+            {/* Ticket Header */}
+            <div className="p-4 bg-[#400849] text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                    <FileText size={16} className="text-[#FF5A0A]" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-sm tracking-tight">Active Dining Ticket</h3>
+                    <p className="text-[11px] text-[#E7B0DE]/80">{cart.length} item kinds</p>
+                  </div>
+                </div>
+
+                {cart.length > 0 && (
+                  <button 
+                    onClick={() => setCart([])}
+                    className="text-[11px] text-white/70 hover:text-white underline"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+
+              {/* Table Picker */}
+              <div className="mt-3">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-[#E7B0DE] block mb-1">
+                  Assign Dining Table *
+                </label>
+                <select
+                  value={selectedTable}
+                  onChange={e => setSelectedTable(e.target.value)}
+                  className="w-full h-10 px-3 rounded-xl bg-white/10 border border-white/20 text-white text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#FF5A0A]"
+                >
+                  <option value="" className="text-gray-900">Select Table for Order...</option>
+                  {tables.map(t => (
+                    <option key={t._id} value={t._id} className="text-gray-900">
+                      Table #{t.tableNumber} ({t.capacity} Seats · {t.location}) - {t.status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Cart Items List */}
+            <div className="p-4 max-h-[360px] overflow-y-auto divide-y divide-[#EADFE8] dark:divide-[#3D2C42]">
+              {cart.length === 0 ? (
+                <div className="py-12 text-center text-[#817985] dark:text-[#B4A9B8]">
+                  <ShoppingCart size={32} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-xs font-bold text-[#242026] dark:text-[#F9F4F8]">Ticket is currently empty</p>
+                  <p className="text-[11px] text-[#817985] mt-0.5">Click any food item on the left to add.</p>
+                </div>
+              ) : (
+                cart.map(item => (
+                  <div key={item.menuItem} className="py-3 first:pt-0 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-xs text-[#242026] dark:text-[#F9F4F8] truncate">{item.name}</p>
+                        <p className="text-[11px] text-[#817985] font-semibold">${item.price.toFixed(2)} each</p>
+                      </div>
+
+                      {/* Quantity Stepper */}
+                      <div className="flex items-center gap-1.5 shrink-0 bg-[#FFF9F5] dark:bg-[#18111B] p-1 rounded-lg border border-[#EADFE8] dark:border-[#3D2C42]">
+                        <button
+                          onClick={() => updateQuantity(item.menuItem, -1)}
+                          className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#F9EAF5] dark:hover:bg-[#2E1E33] text-[#400849] dark:text-[#E7B0DE]"
+                        >
+                          <Minus size={12} />
+                        </button>
+                        <span className="text-xs font-black w-5 text-center">{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.menuItem, 1)}
+                          className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#F9EAF5] dark:hover:bg-[#2E1E33] text-[#400849] dark:text-[#E7B0DE]"
+                        >
+                          <Plus size={12} />
+                        </button>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <span className="font-bold text-xs text-[#242026] dark:text-[#F9F4F8]">
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </span>
+                        <button 
+                          onClick={() => removeFromCart(item.menuItem)}
+                          className="block text-rose-500 hover:text-rose-700 ml-auto mt-1"
+                          title="Remove item"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Kitchen Special Note Input */}
+                    <div className="flex items-center gap-1.5">
+                      <MessageSquare size={12} className="text-[#817985] shrink-0" />
+                      <input
+                        type="text"
+                        placeholder="Add cooking note (e.g. less salt, extra dressing)..."
+                        value={item.specialInstructions}
+                        onChange={e => updateInstructions(item.menuItem, e.target.value)}
+                        className="w-full text-[11px] bg-transparent border-b border-[#EADFE8] dark:border-[#3D2C42] focus:border-[#400849] focus:outline-none py-0.5 text-[#242026] dark:text-[#F9F4F8]"
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Calculations & Submit */}
+            <div className="p-4 bg-[#FFF9F5] dark:bg-[#18111B] border-t border-[#EADFE8] dark:border-[#3D2C42] space-y-2.5">
+              <div className="flex justify-between text-xs text-[#817985] dark:text-[#B4A9B8]">
+                <span>Food & Beverage Subtotal</span>
+                <span className="font-semibold text-[#242026] dark:text-[#F9F4F8]">${subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-[#817985] dark:text-[#B4A9B8]">
+                <span>State & Local Tax (5%)</span>
+                <span className="font-semibold text-[#242026] dark:text-[#F9F4F8]">${tax.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-base font-black text-[#242026] dark:text-[#F9F4F8] pt-2 border-t border-[#EADFE8] dark:border-[#3D2C42]">
+                <span>Total Due</span>
+                <span className="text-[#FF5A0A]">${total.toFixed(2)}</span>
+              </div>
+
+              <Button
+                onClick={placeOrder}
+                disabled={submitting || cart.length === 0}
+                className="w-full h-12 rounded-xl bg-[#FF5A0A] hover:bg-[#e04e06] text-white font-extrabold text-sm shadow-lg shadow-[#FF5A0A]/25 transition-all mt-3"
+              >
+                {submitting ? 'Dispatching...' : 'Dispatch Ticket to Kitchen'}
+              </Button>
+            </div>
+          </Card>
         </div>
       </div>
     </div>
