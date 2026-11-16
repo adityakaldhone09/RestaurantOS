@@ -19,8 +19,10 @@ import {
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { RestaurantOSLogoReveal } from '@/components/ui/liquid-glass-logo-reveal';
+import SplashIntro from '../components/SplashIntro';
 
 const Login = () => {
+  const [showSplash, setShowSplash] = useState(true);
   const [email, setEmail] = useState('admin@restaurant.com');
   const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
@@ -59,39 +61,56 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-[#FFF9F5] dark:bg-[#18111B] text-[#242026] dark:text-[#F9F4F8] transition-colors relative overflow-hidden">
-      {/* Top Right Theme Toggle */}
-      <div className="absolute top-5 right-5 z-20">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={toggleTheme}
-          className="rounded-xl border-[#EADFE8] dark:border-[#3D2C42] bg-white/80 dark:bg-[#231826]/80 backdrop-blur"
-        >
-          {theme === 'dark' ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-[#400849]" />}
-        </Button>
-      </div>
-
-      {/* Left Feature Showcase Banner (Desktop) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#400849] via-[#2F0636] to-[#1E0323] p-12 flex-col justify-between relative overflow-hidden text-white">
-        {/* Subtle Decorative Ambient Glows */}
-        <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-[#FF5A0A]/20 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-[#E7B0DE]/20 blur-3xl pointer-events-none" />
-
-        {/* Brand Header */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-xl shadow-[#FF5A0A]/20 border border-[#E7B0DE]/30">
-            <RestaurantOSLogoReveal className="w-full h-full" themeVariant="brand" tileSize={96} />
-          </div>
-          <div>
-            <span className="font-extrabold text-2xl tracking-tight leading-none text-white">
-              Restaurant<span className="text-[#FF5A0A]">OS</span>
-            </span>
-            <p className="text-xs uppercase font-semibold tracking-widest text-[#E7B0DE]/80 mt-0.5">
-              Next-Gen Hospitality OS
-            </p>
-          </div>
+    <>
+      {showSplash && (
+        <SplashIntro onFinish={() => setShowSplash(false)} duration={3000} />
+      )}
+      <div className="min-h-screen w-full flex bg-[#FFF9F5] dark:bg-[#18111B] text-[#242026] dark:text-[#F9F4F8] transition-colors relative overflow-hidden">
+        {/* Top Right Controls (Theme & Replay Splash) */}
+        <div className="absolute top-5 right-5 z-20 flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowSplash(true)}
+            className="rounded-xl border-[#EADFE8] dark:border-[#3D2C42] bg-white/80 dark:bg-[#231826]/80 backdrop-blur text-xs font-semibold text-[#817985] dark:text-[#E7B0DE] hover:text-[#400849] dark:hover:text-white"
+          >
+            <Sparkles size={13} className="mr-1.5 text-[#FF5A0A]" />
+            Replay Intro
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleTheme}
+            className="rounded-xl border-[#EADFE8] dark:border-[#3D2C42] bg-white/80 dark:bg-[#231826]/80 backdrop-blur"
+          >
+            {theme === 'dark' ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-[#400849]" />}
+          </Button>
         </div>
+
+        {/* Left Feature Showcase Banner (Desktop) */}
+        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#400849] via-[#2F0636] to-[#1E0323] p-12 flex-col justify-between relative overflow-hidden text-white">
+          {/* Subtle Decorative Ambient Glows */}
+          <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-[#FF5A0A]/20 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-[#E7B0DE]/20 blur-3xl pointer-events-none" />
+
+          {/* Brand Header */}
+          <div 
+            onClick={() => setShowSplash(true)}
+            className="relative z-10 flex items-center gap-3 cursor-pointer group"
+            title="Click to replay logo reveal"
+          >
+            <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-xl shadow-[#FF5A0A]/20 border border-[#E7B0DE]/30 transition-transform group-hover:scale-105">
+              <RestaurantOSLogoReveal className="w-full h-full" themeVariant="brand" tileSize={96} />
+            </div>
+            <div>
+              <span className="font-extrabold text-2xl tracking-tight leading-none text-white group-hover:text-[#E7B0DE] transition-colors">
+                Restaurant<span className="text-[#FF5A0A]">OS</span>
+              </span>
+              <p className="text-xs uppercase font-semibold tracking-widest text-[#E7B0DE]/80 mt-0.5">
+                Next-Gen Hospitality OS
+              </p>
+            </div>
+          </div>
 
         {/* Hero Value Proposition */}
         <div className="relative z-10 max-w-lg space-y-6 my-auto">
@@ -264,6 +283,7 @@ const Login = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

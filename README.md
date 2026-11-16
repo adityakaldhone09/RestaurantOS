@@ -164,6 +164,8 @@ cp .mcp.json.example .mcp.json
 # Add your personal 21st.dev and Figma API keys if using MCP agents
 ```
 
+To connect v0 from VS Code, the workspace includes a v0 MCP server configuration at `.vscode/mcp.json`. You need VS Code with MCP support and access to a v0 account. Start the `v0` server from VS Code and complete the OAuth sign-in when prompted; no v0 API key is needed.
+
 ### 3. Install Dependencies
 
 ```bash
